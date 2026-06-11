@@ -1,6 +1,17 @@
 import Navbar from "../components/Navbar";
+import { useEffect, useState } from "react";
 
 function Dashboard() {
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/")
+      .then((response) => response.json())
+      .then((data) => {
+        setMessage(data.message);
+      });
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -11,29 +22,10 @@ function Dashboard() {
           Dashboard
         </h1>
 
-        <p className="mt-2">
-          Welcome to CompanyBrain AI
+        <p className="mt-4 text-green-600">
+          {message}
         </p>
 
-        <div className="grid grid-cols-2 gap-4 mt-8">
-
-          <div className="border p-6 rounded-lg">
-            Upload Documents
-          </div>
-
-          <div className="border p-6 rounded-lg">
-            My Notes
-          </div>
-
-          <div className="border p-6 rounded-lg">
-            Team Notes
-          </div>
-
-          <div className="border p-6 rounded-lg">
-            Ask Atlas
-          </div>
-
-        </div>
       </div>
     </>
   );
