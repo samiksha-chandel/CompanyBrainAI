@@ -4,14 +4,26 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../services/supabase";
 
 function Dashboard() {
-  const [message, setMessage] = useState("");
-
+  const [documents, setDocuments] = useState([]);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [type, setType] = useState("personal");
+  
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/")
-      .then((response) => response.json())
-      .then((data) => {
-        setMessage(data.message);
-      });
+    async function fetchDocuments() {
+      const { data, error } = await supabase
+        .from("knowledge_items")
+        .select("*");
+      
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setDocuments(data);
+    }
+
+    fetchDocuments();
   }, []);
 
   const navigate = useNavigate();
@@ -35,6 +47,34 @@ function Dashboard() {
     navigate("/login");
   }
 
+  async function handleCreateDocument() {
+    console.log("BUTTON CLICKED");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { error } = await supabase
+      .from("knowledge_items")
+      .insert([
+        {
+          pid: `DOC-${Date.now()}`,
+          title,
+          content,
+          knowledge_type: type,
+          owner_user_id: user.id,
+          created_by: user.id,
+          is_deleted: false,
+        },
+      ]);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    window.location.reload();
+  }
+
   return (
     <>
       <Navbar onLogout={handleLogout} />
@@ -45,9 +85,58 @@ function Dashboard() {
           Dashboard
         </h1>
 
-        <p className="mt-4 text-green-600">
-          {message}
-        </p>
+        <div className="mb-8 border rounded p-4">
+
+        <h2 className="text-2xl font-semibold mb-4"> Create Document </h2>
+
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full p-3 border rounded mb-3"
+        />
+
+        <textarea
+          placeholder="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full p-3 border rounded mb-3"
+        />
+
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="w-full p-3 border rounded mb-3"
+        >
+          <option value="personal">Personal</option>
+          <option value="team">Team</option>
+          <option value="department">Department</option>
+        </select>
+
+        <button
+          onClick={handleCreateDocument}
+          className="bg-black text-white px-4 py-2 rounded"
+        >
+          Create Document
+        </button>
+
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4"> Documents </h2>
+
+          {documents.map((doc) => (
+            <div key={doc.id} className="border rounded p-4 mb-4">
+            <h3 className="text-xl font-bold"> {doc.title} </h3>
+
+            <p className="text-gray-600"> Type: {doc.knowledge_type} </p>
+
+            <p className="mt-2"> {doc.content} </p>
+        </div>
+      ))}
+
+    </div>
 
       </div>
     </>
