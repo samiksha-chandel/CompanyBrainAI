@@ -1,5 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "../services/supabase";
 
 function Dashboard() {
   const [message, setMessage] = useState("");
@@ -12,9 +14,30 @@ function Dashboard() {
       });
   }, []);
 
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function checkUser() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        navigate("/login");
+      }
+    }
+
+    checkUser();
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    navigate("/login");
+  }
+
   return (
     <>
-      <Navbar />
+      <Navbar onLogout={handleLogout} />
 
       <div className="p-8">
 
